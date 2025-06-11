@@ -14,8 +14,8 @@ import java.util.List;
 
 public class MainFrame extends JFrame {
     private final TodoService todoService = ApplicationContext.getTodoService();
-    private final TodoTablePanel todoTablePanel;
-    private final ControlPanel controlPanel;
+    private TodoTablePanel todoTablePanel;
+    private ControlPanel controlPanel;
 
     public MainFrame() {
         super("Reference project");
@@ -25,14 +25,18 @@ public class MainFrame extends JFrame {
 
         List<Todo> todos = todoService.getAllTodos();
 
+        initUi(todos);
+
+        bindListeners(todos);
+    }
+
+    private void initUi(List<Todo> todos) {
         todoTablePanel = new TodoTablePanel(todos);
         controlPanel = new ControlPanel();
 
         setLayout(new BorderLayout());
         add(todoTablePanel, BorderLayout.CENTER);
         add(controlPanel, BorderLayout.SOUTH);
-
-        bindListeners(todos);
     }
 
     private void bindListeners(List<Todo> todos) {

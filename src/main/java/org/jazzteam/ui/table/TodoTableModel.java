@@ -1,5 +1,7 @@
 package org.jazzteam.ui.table;
 
+
+import lombok.extern.slf4j.Slf4j;
 import org.jazzteam.core.ApplicationContext;
 import org.jazzteam.model.Priority;
 import org.jazzteam.model.Status;
@@ -9,6 +11,7 @@ import javax.swing.table.AbstractTableModel;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+@Slf4j
 public class TodoTableModel extends AbstractTableModel {
     private final List<Todo> todos;
     private final String[] columns = {"Title", "Description", "Priority", "Creation Date", "Due Date", "Status"};
@@ -86,13 +89,14 @@ public class TodoTableModel extends AbstractTableModel {
                 todo.setDescription((String) value);
                 break;
             case 2:
-                todo.setPriorityName((String) value);
+                todo.setPriorityName(((Priority) value).getName());
                 break;
             case 4:
                 try {
                     todo.setDueDate(java.time.LocalDate.parse((String) value, formatter));
                 } catch (Exception e) {
                     todo.setDueDate(null);
+                    log.warn("Could not parse due date", e);
                 }
                 break;
             case 5:
