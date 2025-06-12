@@ -24,7 +24,7 @@ public abstract class AbstractDAO<T> {
             return result;
         } catch (RuntimeException e) {
             if (transaction != null) transaction.rollback();
-            throw e;
+            throw new RuntimeException("Cannot execute command: ", e);
         }
     }
 
