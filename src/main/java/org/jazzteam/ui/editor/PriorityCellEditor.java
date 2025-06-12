@@ -3,6 +3,7 @@ package org.jazzteam.ui.editor;
 
 import org.jazzteam.core.ApplicationContext;
 import org.jazzteam.model.Priority;
+import org.jazzteam.ui.renderer.PriorityRenderer;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -30,18 +31,6 @@ public class PriorityCellEditor extends AbstractCellEditor implements TableCellE
         }
 
         return comboBox;
-    }
-
-    private static class PriorityRenderer extends DefaultListCellRenderer {
-        @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                      boolean isSelected, boolean cellHasFocus) {
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (value instanceof Priority) {
-                setText(((Priority) value).getName());
-            }
-            return this;
-        }
     }
 }
 

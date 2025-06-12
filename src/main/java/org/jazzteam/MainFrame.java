@@ -10,7 +10,6 @@ import org.jazzteam.ui.panel.TodoTablePanel;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 public class MainFrame extends JFrame {
     private final TodoService todoService = ApplicationContext.getTodoService();
@@ -23,15 +22,13 @@ public class MainFrame extends JFrame {
         setSize(800, 600);
         setLocationRelativeTo(null);
 
-        List<Todo> todos = todoService.getAllTodos();
-
-        initUi(todos);
-
-        bindListeners(todos);
+        initUi();
+        bindListeners();
     }
 
-    private void initUi(List<Todo> todos) {
-        todoTablePanel = new TodoTablePanel(todos);
+    private void initUi() {
+        todoTablePanel = new TodoTablePanel();
+        todoTablePanel.updateData();
         controlPanel = new ControlPanel();
 
         setLayout(new BorderLayout());
@@ -39,33 +36,33 @@ public class MainFrame extends JFrame {
         add(controlPanel, BorderLayout.SOUTH);
     }
 
-    private void bindListeners(List<Todo> todos) {
+    private void bindListeners() {
         controlPanel.setAddAction(e -> {
             TodoDialog dialog = new TodoDialog(this);
             dialog.setVisible(true);
             if (dialog.isSavePressed()) {
                 todoService.addTodo(dialog.getTodo());
-                todoTablePanel.getTableModel().fireTableDataChanged();
+                todoTablePanel.updateData();
             }
         });
 
         controlPanel.setDeleteAction(e -> {
             int sel = todoTablePanel.getTable().getSelectedRow();
             if (sel >= 0) {
-                todoService.deleteTodo(sel);
-                todoTablePanel.getTableModel().fireTableDataChanged();
+                todoService.deleteTodo(todoTablePanel.getTableModel().getTodoAt(sel));
+                todoTablePanel.updateData();
             }
         });
 
         controlPanel.setEditAction(e -> {
             int sel = todoTablePanel.getTable().getSelectedRow();
             if (sel >= 0) {
-                Todo todo = todos.get(sel);
+                Todo todo = todoTablePanel.getTableModel().getTodoAt(sel);
                 TodoDialog dialog = new TodoDialog(this, todo);
                 dialog.setVisible(true);
                 if (dialog.isSavePressed()) {
-                    todoService.updateTodo(sel,dialog.getTodo());
-                    todoTablePanel.getTableModel().fireTableDataChanged();
+                    todoService.updateTodo(dialog.getTodo());
+                    todoTablePanel.updateData();
                 }
             }
         });
@@ -73,24 +70,22 @@ public class MainFrame extends JFrame {
         controlPanel.setMoveUpAction(e -> {
             int sel = todoTablePanel.getTable().getSelectedRow();
             if (sel > 0) {
-                todoService.moveUp(sel);
-                todoTablePanel.getTableModel().fireTableDataChanged();
+                todoService.moveUp(todoTablePanel.getTableModel().getTodoAt(sel).getId());
+                todoTablePanel.updateData();
             }
         });
 
         controlPanel.setMoveDownAction(e -> {
             int sel = todoTablePanel.getTable().getSelectedRow();
-            if (sel >= 0 && sel < todos.size() - 1) {
-                todoService.moveDown(sel);
-                todoTablePanel.getTableModel().fireTableDataChanged();
-            }
+            todoService.moveDown(todoTablePanel.getTableModel().getTodoAt(sel).getId());
+            todoTablePanel.updateData();
         });
 
         controlPanel.setPrioritiesAction(e -> {
             PriorityDialog dialog = new PriorityDialog(this);
             dialog.setVisible(true);
             if (dialog.isStateChanged()) {
-                todoTablePanel.getTableModel().fireTableDataChanged();
+                todoTablePanel.updateData();
             }
         });
     }

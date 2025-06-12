@@ -2,11 +2,11 @@ package org.jazzteam.service;
 
 import org.jazzteam.core.ApplicationContext;
 import org.jazzteam.model.Priority;
-import org.jazzteam.repository.PriorityRepository;
+import org.jazzteam.repository.PriorityDAO;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,20 +17,24 @@ import static org.mockito.Mockito.*;
 
 public class PriorityServiceTest {
 
-    private PriorityRepository priorityRepository;
+    private PriorityDAO priorityDAO;
     private TodoService mockTodoService;
-
-    private MockedStatic<ApplicationContext> mockedContext;
-
     private PriorityService priorityService;
+    private MockedStatic<ApplicationContext> mockedContext;
 
     @Before
     public void setUp() {
-        priorityRepository = mock(PriorityRepository.class);
+        priorityDAO = mock(PriorityDAO.class);
         mockTodoService = mock(TodoService.class);
-        mockedContext = Mockito.mockStatic(ApplicationContext.class);
+        mockedContext = mockStatic(ApplicationContext.class);
         mockedContext.when(ApplicationContext::getTodoService).thenReturn(mockTodoService);
-        priorityService = new PriorityService(priorityRepository);
+
+        priorityService = new PriorityService(priorityDAO);
+    }
+
+    @After
+    public void tearDown() {
+        mockedContext.close();
     }
 
     @Test
@@ -39,57 +43,38 @@ public class PriorityServiceTest {
                 new Priority("High", 1),
                 new Priority("Low", 3)
         );
-        when(priorityRepository.getAllPriorities()).thenReturn(priorities);
+        when(priorityDAO.findAll()).thenReturn(priorities);
 
         List<Priority> result = priorityService.getAllPriorities();
 
         assertNotNull(result);
         assertEquals(priorities, result);
-        verify(priorityRepository).getAllPriorities();
+        verify(priorityDAO).findAll();
     }
 
     @Test
-    public void testAddPriority() {
+    public void testSavePriority() {
         Priority p = new Priority("Medium", 2);
-        priorityService.addPriority(p);
-        verify(priorityRepository).addPriority(p);
+        priorityService.savePriority(p);
+        verify(priorityDAO).save(p);
     }
 
     @Test
     public void testUpdatePriority() {
-        String currentName = "High";
-        Priority newPriority = new Priority("Urgent", 1);
+        Priority updatedPriority = new Priority("Urgent", 1);
 
-        priorityService.updatePriority(currentName, newPriority);
+        priorityService.updatePriority(updatedPriority);
 
-        verify(priorityRepository).updatePriority(currentName, newPriority);
-        verify(mockTodoService).updateTodoPriorities(currentName, newPriority.getName());
+        verify(priorityDAO).update(updatedPriority);
     }
 
     @Test
     public void testDeletePriority() {
-        String name = "Low";
+        Priority toDelete = new Priority("Low", 3);
 
-        priorityService.deletePriority(name);
+        priorityService.deletePriority(toDelete);
 
-        verify(priorityRepository).deletePriority(name);
-        verify(mockTodoService).updateTodoPriorities(name, null);
-    }
-
-    @Test
-    public void testGetPriorityNames() {
-        List<String> names = Arrays.asList("High", "Medium", "Low");
-        when(priorityRepository.getPriorityNames()).thenReturn(names);
-
-        List<String> result = priorityService.getPriorityNames();
-
-        assertNotNull(result);
-        assertEquals(names, result);
-        verify(priorityRepository).getPriorityNames();
-    }
-
-    @org.junit.After
-    public void tearDown() {
-        mockedContext.close();
+        verify(mockTodoService).clearPriorityFromTodos(toDelete);
+        verify(priorityDAO).delete(toDelete);
     }
 }

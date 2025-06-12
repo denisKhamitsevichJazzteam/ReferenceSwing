@@ -3,38 +3,33 @@ package org.jazzteam.service;
 
 import org.jazzteam.core.ApplicationContext;
 import org.jazzteam.model.Priority;
-import org.jazzteam.repository.PriorityRepository;
+import org.jazzteam.repository.PriorityDAO;
 
 import java.util.List;
 
 public class PriorityService {
 
-    private final PriorityRepository priorityRepository;
+    private final PriorityDAO priorityDAO;
 
-    public PriorityService(PriorityRepository priorityRepository) {
-        this.priorityRepository = priorityRepository;
+    public PriorityService(PriorityDAO priorityDAO) {
+        this.priorityDAO = priorityDAO;
     }
 
     public List<Priority> getAllPriorities() {
-        return priorityRepository.getAllPriorities();
+        return priorityDAO.findAll();
     }
 
-    public void addPriority(Priority p) {
-        priorityRepository.addPriority(p);
+    public void savePriority(Priority priority) {
+        priorityDAO.save(priority);
     }
 
-    public void updatePriority(String currentName, Priority newPriority) {
-        priorityRepository.updatePriority(currentName, newPriority);
-        ApplicationContext.getTodoService().updateTodoPriorities(currentName, newPriority.getName());
+    public void updatePriority(Priority newPriority) {
+        priorityDAO.update(newPriority);
     }
 
-    public void deletePriority(String name) {
-        priorityRepository.deletePriority(name);
-        ApplicationContext.getTodoService().updateTodoPriorities(name, null);
-    }
-
-    public List<String> getPriorityNames() {
-        return priorityRepository.getPriorityNames();
+    public void deletePriority(Priority priority) {
+        ApplicationContext.getTodoService().clearPriorityFromTodos(priority);
+        priorityDAO.delete(priority);
     }
 }
 

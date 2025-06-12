@@ -2,8 +2,10 @@ package org.jazzteam.ui.dialog;
 
 import lombok.Getter;
 import org.jazzteam.core.ApplicationContext;
+import org.jazzteam.model.Priority;
 import org.jazzteam.model.Status;
 import org.jazzteam.model.Todo;
+import org.jazzteam.ui.renderer.PriorityRenderer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,7 +16,7 @@ import java.time.format.DateTimeParseException;
 public class TodoDialog extends JDialog {
     private JTextField titleField;
     private JTextArea descriptionArea;
-    private JComboBox<String> priorityComboBox;
+    private JComboBox<Priority> priorityComboBox;
     private JTextField creationDateField;
     private JTextField dueDateField;
     private JComboBox<Status> statusComboBox;
@@ -43,7 +45,7 @@ public class TodoDialog extends JDialog {
         this.todo = todo;
 
         initUI();
-        fillFields(todo);
+        fillFields();
 
         pack();
         setLocationRelativeTo(owner);
@@ -72,7 +74,9 @@ public class TodoDialog extends JDialog {
         addFormRow(formPanel, gbc, 1, DESCRIPTION, new JScrollPane(descriptionArea));
 
         // Priority
-        priorityComboBox = new JComboBox<>(ApplicationContext.getPriorityService().getPriorityNames().toArray(new String[0]));
+        priorityComboBox = new JComboBox<>(ApplicationContext.getPriorityService().getAllPriorities().toArray(new Priority[0]));
+        priorityComboBox.setRenderer(new PriorityRenderer());
+
         addFormRow(formPanel, gbc, 2, PRIORITY, priorityComboBox);
 
         // Creation Date (readonly)
@@ -125,11 +129,11 @@ public class TodoDialog extends JDialog {
         return field;
     }
 
-    private void fillFields(Todo todo) {
+    private void fillFields() {
         if (todo != null) {
             titleField.setText(todo.getTitle());
             descriptionArea.setText(todo.getDescription());
-            priorityComboBox.setSelectedItem(todo.getPriorityName());
+            priorityComboBox.setSelectedItem(todo.getPriority() != null ? todo.getPriority() : "");
             creationDateField.setText(todo.getCreationDate().toString());
             dueDateField.setText(todo.getDueDate() != null ? todo.getDueDate().toString() : "");
             statusComboBox.setSelectedItem(todo.getStatus());
@@ -151,13 +155,14 @@ public class TodoDialog extends JDialog {
             LocalDate dueDate = dueDateField.getText().isEmpty() ?
                     null : LocalDate.parse(dueDateField.getText());
 
-            todo = new Todo(
+            todo = new Todo(todo != null ? todo.getId() : null,
                     titleField.getText().trim(),
                     descriptionArea.getText().trim(),
-                    (String) priorityComboBox.getSelectedItem(),
+                    (Priority) priorityComboBox.getSelectedItem(),
                     LocalDate.parse(creationDateField.getText()),
                     dueDate,
-                    (Status) statusComboBox.getSelectedItem()
+                    (Status) statusComboBox.getSelectedItem(),
+                    todo != null ? todo.getSortOrder() : null
             );
 
             isSavePressed = true;
