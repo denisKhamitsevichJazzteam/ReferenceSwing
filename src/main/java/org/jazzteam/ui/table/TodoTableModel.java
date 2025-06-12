@@ -6,6 +6,7 @@ import org.jazzteam.core.ApplicationContext;
 import org.jazzteam.model.Priority;
 import org.jazzteam.model.Status;
 import org.jazzteam.model.Todo;
+import org.jazzteam.service.TodoService;
 
 import javax.swing.table.AbstractTableModel;
 import java.time.format.DateTimeFormatter;
@@ -13,13 +14,23 @@ import java.util.List;
 
 @Slf4j
 public class TodoTableModel extends AbstractTableModel {
-    private final List<Todo> todos;
+    private List<Todo> todos;
+    private final TodoService todoService;
     private final String[] columns = {"Title", "Description", "Priority", "Creation Date", "Due Date", "Status"};
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    public TodoTableModel(List<Todo> todos) {
-        this.todos = todos;
+    public TodoTableModel(TodoService todoService) {
+        this.todoService = todoService;
+    }
+
+    public void updateData() {
+        this.todos = todoService.getAllTodos();
+        fireTableDataChanged();
+    }
+
+    public Todo getTodoAt(int rowIndex) {
+        return todos.get(rowIndex);
     }
 
     @Override
@@ -66,7 +77,7 @@ public class TodoTableModel extends AbstractTableModel {
             case 1:
                 return todo.getDescription();
             case 2:
-                return todo.getPriorityName();
+                return todo.getPriority() != null ? todo.getPriority().getName() : "";
             case 3:
                 return todo.getCreationDate() != null ? todo.getCreationDate().format(formatter) : "";
             case 4:
@@ -89,7 +100,7 @@ public class TodoTableModel extends AbstractTableModel {
                 todo.setDescription((String) value);
                 break;
             case 2:
-                todo.setPriorityName(((Priority) value).getName());
+                todo.setPriority((Priority) value);
                 break;
             case 4:
                 try {
@@ -105,7 +116,7 @@ public class TodoTableModel extends AbstractTableModel {
             default:
                 return;
         }
-        ApplicationContext.getTodoService().updateTodo(row, todo);
+        ApplicationContext.getTodoService().updateTodo(todo);
         fireTableCellUpdated(row, col);
     }
 }

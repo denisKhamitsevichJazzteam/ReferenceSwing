@@ -1,43 +1,44 @@
 package org.jazzteam.service;
 
+import org.jazzteam.model.Priority;
 import org.jazzteam.model.Todo;
-import org.jazzteam.repository.TodoRepository;
+import org.jazzteam.repository.TodoDAO;
 
 import java.util.List;
 
 public class TodoService {
-    private final TodoRepository todoRepository;
+    private final TodoDAO todoDAO;
 
-    public TodoService(TodoRepository todoRepository) {
-        this.todoRepository = todoRepository;
+    public TodoService(TodoDAO todoDAO) {
+        this.todoDAO = todoDAO;
     }
 
     public List<Todo> getAllTodos() {
-        return todoRepository.getAllTodos();
+        return todoDAO.findAll();
     }
 
     public void addTodo(Todo todo) {
-        todoRepository.addTodo(todo);
+        todoDAO.save(todo);
     }
 
-    public void updateTodo(int index, Todo todo) {
-        todoRepository.updateTodo(index, todo);
+    public void updateTodo(Todo todo) {
+        todoDAO.update(todo);
     }
 
-    public void updateTodoPriorities(String currentName, String newName) {
-        todoRepository.updateTodoPriorities(currentName, newName);
+    public void clearPriorityFromTodos(Priority priority) {
+        todoDAO.clearPriorityFromTodos(priority);
     }
 
-    public void deleteTodo(int index) {
-        todoRepository.deleteTodo(index);
+    public void deleteTodo(Todo todo) {
+        todoDAO.delete(todo);
     }
 
-    public void moveUp(int index) {
-        todoRepository.moveUp(index);
+    public void moveUp(Long id) {
+        todoDAO.moveUp(id);
     }
 
-    public void moveDown(int index) {
-        todoRepository.moveDown(index);
+    public void moveDown(Long id) {
+        todoDAO.moveDown(id);
     }
 }
 

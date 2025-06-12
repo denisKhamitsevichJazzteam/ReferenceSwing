@@ -88,11 +88,8 @@ public class PriorityDialog extends JDialog {
         PriorityEditDialog dialog = new PriorityEditDialog(this, ADD_NEW_PRIORITY, null);
         dialog.setVisible(true);
         if (dialog.isConfirmed()) {
-            String name = dialog.getPriorityName();
-            int weight = dialog.getPriorityWeight();
-            Priority newPriority = new Priority(name, weight);
-            priorityService.addPriority(newPriority);
-            listModel.addElement(newPriority);
+            priorityService.savePriority(dialog.getPriority());
+            loadPriorities();
             isStateChanged = true;
         }
     }
@@ -104,12 +101,8 @@ public class PriorityDialog extends JDialog {
         PriorityEditDialog dialog = new PriorityEditDialog(this, EDIT_PRIORITY, selected);
         dialog.setVisible(true);
         if (dialog.isConfirmed()) {
-            String newName = dialog.getPriorityName();
-            int newWeight = dialog.getPriorityWeight();
-
-            priorityService.updatePriority(selected.getName(), new Priority(newName, newWeight));
-
-            listModel.setElementAt(selected, priorityJList.getSelectedIndex());
+            priorityService.updatePriority(dialog.getPriority());
+            loadPriorities();
             isStateChanged = true;
         }
     }
@@ -117,7 +110,7 @@ public class PriorityDialog extends JDialog {
     private void deleteSelectedPriority() {
         Priority selected = priorityJList.getSelectedValue();
         if (selected != null) {
-            priorityService.deletePriority(selected.getName());
+            priorityService.deletePriority(selected);
             listModel.removeElement(selected);
             isStateChanged = true;
         }

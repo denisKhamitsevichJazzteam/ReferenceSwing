@@ -1,8 +1,8 @@
 package org.jazzteam.core;
 
 import lombok.Getter;
-import org.jazzteam.repository.PriorityRepository;
-import org.jazzteam.repository.TodoRepository;
+import org.jazzteam.repository.PriorityDAO;
+import org.jazzteam.repository.TodoDAO;
 import org.jazzteam.service.PriorityService;
 import org.jazzteam.service.TodoService;
 
@@ -21,13 +21,13 @@ import org.jazzteam.service.TodoService;
  */
 public class ApplicationContext {
     @Getter
-    private static final TodoRepository todoRepository = new TodoRepository();
+    private static final TodoDAO todoDAO = new TodoDAO();
     @Getter
-    private static final PriorityRepository priorityRepository = new PriorityRepository();
+    private static final PriorityDAO priorityDAO = new PriorityDAO();
 
     @Getter
-    private static final TodoService todoService = new TodoService(todoRepository);
+    private static final TodoService todoService = new TodoService(todoDAO);
     @Getter
-    private static final PriorityService priorityService = new PriorityService(priorityRepository);
+    private static final PriorityService priorityService = new PriorityService(priorityDAO);
 
 }

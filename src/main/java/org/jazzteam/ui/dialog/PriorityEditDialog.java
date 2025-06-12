@@ -9,6 +9,7 @@ public class PriorityEditDialog extends JDialog {
     private JTextField nameField;
     private JTextField weightField;
     private boolean isConfirmed = false;
+    private Priority priority;
 
     public static final String NAME = "Name:";
     public static final String WEIGHT = "Weight:";
@@ -17,12 +18,13 @@ public class PriorityEditDialog extends JDialog {
 
     public PriorityEditDialog(Window owner, String title, Priority priority) {
         super(owner, title, ModalityType.APPLICATION_MODAL);
-        initUI(priority);
+        this.priority = priority;
+        initUI();
         pack();
         setLocationRelativeTo(owner);
     }
 
-    private void initUI(Priority priority) {
+    private void initUI() {
         nameField = new JTextField(20);
         weightField = new JTextField(20);
 
@@ -60,6 +62,7 @@ public class PriorityEditDialog extends JDialog {
         okButton.addActionListener(e -> {
             if (validateInput()) {
                 isConfirmed = true;
+                updatePriority();
                 setVisible(false);
             }
         });
@@ -73,6 +76,14 @@ public class PriorityEditDialog extends JDialog {
         buttonPanel.add(okButton);
         buttonPanel.add(cancelButton);
         return buttonPanel;
+    }
+
+    private void updatePriority() {
+        if (priority == null) {
+            priority = new Priority();
+        }
+        priority.setName(nameField.getText());
+        priority.setWeight(Integer.parseInt(weightField.getText().trim()));
     }
 
     private boolean validateInput() {
@@ -97,11 +108,7 @@ public class PriorityEditDialog extends JDialog {
         return isConfirmed;
     }
 
-    public String getPriorityName() {
-        return nameField.getText().trim();
-    }
-
-    public int getPriorityWeight() {
-        return Integer.parseInt(weightField.getText().trim());
+    public Priority getPriority() {
+        return priority;
     }
 }

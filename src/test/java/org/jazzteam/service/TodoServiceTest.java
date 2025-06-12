@@ -1,8 +1,9 @@
 package org.jazzteam.service;
 
+import org.jazzteam.model.Priority;
 import org.jazzteam.model.Status;
 import org.jazzteam.model.Todo;
-import org.jazzteam.repository.TodoRepository;
+import org.jazzteam.repository.TodoDAO;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -16,73 +17,74 @@ import static org.mockito.Mockito.*;
 
 public class TodoServiceTest {
 
-    private TodoRepository todoRepository;
+    private TodoDAO todoDAO;
     private TodoService todoService;
 
     @Before
     public void setUp() {
-        todoRepository = mock(TodoRepository.class);
-        todoService = new TodoService(todoRepository);
+        todoDAO = mock(TodoDAO.class);
+        todoService = new TodoService(todoDAO);
     }
 
     @Test
     public void testGetAllTodos() {
         List<Todo> todos = Arrays.asList(
-                new Todo("Title1", "Desc1", "High", LocalDate.now(), LocalDate.now().plusDays(5), Status.OPEN),
-                new Todo("Title2", "Desc2", "Low", LocalDate.now(), LocalDate.now().plusDays(10), Status.IN_PROGRESS)
+                new Todo(1L, "Title1", "Desc1", new Priority("High", 1),
+                        LocalDate.now(), LocalDate.now().plusDays(5), Status.OPEN, 1),
+                new Todo(2L, "Title2", "Desc2", new Priority("Low", 3),
+                        LocalDate.now(), LocalDate.now().plusDays(10), Status.IN_PROGRESS, 2)
         );
-        when(todoRepository.getAllTodos()).thenReturn(todos);
+        when(todoDAO.findAll()).thenReturn(todos);
 
         List<Todo> result = todoService.getAllTodos();
 
         assertNotNull(result);
         assertEquals(todos, result);
-        verify(todoRepository).getAllTodos();
+        verify(todoDAO).findAll();
     }
 
     @Test
     public void testAddTodo() {
-        Todo todo = new Todo("Title", "Description", "Medium", LocalDate.now(), LocalDate.now().plusDays(7), Status.OPEN);
+        Todo todo = new Todo(1L, "Title", "Description", new Priority("Medium", 2),
+                LocalDate.now(), LocalDate.now().plusDays(7), Status.OPEN, 1);
         todoService.addTodo(todo);
-        verify(todoRepository).addTodo(todo);
+        verify(todoDAO).save(todo);
     }
 
     @Test
     public void testUpdateTodo() {
-        int index = 0;
-        Todo todo = new Todo("Updated Title", "Updated Desc", "High", LocalDate.now(), LocalDate.now().plusDays(3), Status.IN_PROGRESS);
-        todoService.updateTodo(index, todo);
-        verify(todoRepository).updateTodo(index, todo);
+        Todo todo = new Todo(2L, "Updated Title", "Updated Desc", new Priority("High", 1),
+                LocalDate.now(), LocalDate.now().plusDays(3), Status.IN_PROGRESS, 1);
+        todoService.updateTodo(todo);
+        verify(todoDAO).update(todo);
     }
 
     @Test
-    public void testUpdateTodoPriorities() {
-        String currentName = "Low";
-        String newName = "Medium";
-
-        todoService.updateTodoPriorities(currentName, newName);
-
-        verify(todoRepository).updateTodoPriorities(currentName, newName);
+    public void testClearPriorityFromTodos() {
+        Priority priority = new Priority("Low", 3);
+        todoService.clearPriorityFromTodos(priority);
+        verify(todoDAO).clearPriorityFromTodos(priority);
     }
 
     @Test
     public void testDeleteTodo() {
-        int index = 2;
-        todoService.deleteTodo(index);
-        verify(todoRepository).deleteTodo(index);
+        Todo todo = new Todo();
+        todo.setId(2L);
+        todoService.deleteTodo(todo);
+        verify(todoDAO).delete(todo);
     }
 
     @Test
     public void testMoveUp() {
-        int index = 3;
-        todoService.moveUp(index);
-        verify(todoRepository).moveUp(index);
+        Long id = 3L;
+        todoService.moveUp(id);
+        verify(todoDAO).moveUp(id);
     }
 
     @Test
     public void testMoveDown() {
-        int index = 4;
-        todoService.moveDown(index);
-        verify(todoRepository).moveDown(index);
+        Long id = 4L;
+        todoService.moveDown(id);
+        verify(todoDAO).moveDown(id);
     }
 }
