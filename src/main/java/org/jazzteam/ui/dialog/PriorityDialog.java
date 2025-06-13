@@ -1,20 +1,25 @@
 package org.jazzteam.ui.dialog;
 
-import lombok.Getter;
-import org.jazzteam.core.ApplicationContext;
 import org.jazzteam.model.Priority;
-import org.jazzteam.service.PriorityService;
+import org.jazzteam.task.TaskManager;
+import org.jazzteam.task.Updatable;
+import org.jazzteam.task.listener.CommonTaskListener;
+import org.jazzteam.task.priority.DeletePriorityTask;
+import org.jazzteam.task.priority.GetAllPrioritiesTask;
+import org.jazzteam.task.priority.SavePriorityTask;
+import org.jazzteam.task.priority.UpdatePriorityTask;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
-public class PriorityDialog extends JDialog {
-    private final PriorityService priorityService = ApplicationContext.getPriorityService();
+public class PriorityDialog extends JDialog implements Updatable {
     private final DefaultListModel<Priority> listModel = new DefaultListModel<>();
     private final JList<Priority> priorityJList = new JList<>(listModel);
-    @Getter
-    private boolean isStateChanged = false;
+    private final List<Updatable> updatableElements = new ArrayList<>();
+    private CommonTaskListener<Void> listener;
+    private List<Priority> currentPriorities = new ArrayList<>();
 
     public static final String PRIORITY_MANAGEMENT = "Priority Management";
     public static final String ADD = "Add";
@@ -25,11 +30,14 @@ public class PriorityDialog extends JDialog {
     public static final String EDIT_PRIORITY = "Edit Priority";
 
 
-    public PriorityDialog(Frame owner) {
+    public PriorityDialog(Frame owner, List<Updatable> updatableElements) {
         super(owner, true);
+        this.updatableElements.add(this);
+        this.updatableElements.addAll(updatableElements);
+
         setTitle(PRIORITY_MANAGEMENT);
         initUI();
-        loadPriorities();
+        update();
 
         pack();
         setLocationRelativeTo(owner);
@@ -37,6 +45,7 @@ public class PriorityDialog extends JDialog {
     }
 
     private void initUI() {
+        listener = new CommonTaskListener<>(updatableElements);
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -78,19 +87,17 @@ public class PriorityDialog extends JDialog {
         return button;
     }
 
-    private void loadPriorities() {
+    private void redrawPriorities() {
         listModel.clear();
-        List<Priority> priorities = priorityService.getAllPriorities();
-        priorities.forEach(listModel::addElement);
+        currentPriorities.forEach(listModel::addElement);
     }
 
     private void showAddPriorityDialog() {
         PriorityEditDialog dialog = new PriorityEditDialog(this, ADD_NEW_PRIORITY, null);
         dialog.setVisible(true);
         if (dialog.isConfirmed()) {
-            priorityService.savePriority(dialog.getPriority());
-            loadPriorities();
-            isStateChanged = true;
+            SavePriorityTask task = new SavePriorityTask(dialog.getPriority(), listener);
+            TaskManager.submit(task);
         }
     }
 
@@ -101,19 +108,26 @@ public class PriorityDialog extends JDialog {
         PriorityEditDialog dialog = new PriorityEditDialog(this, EDIT_PRIORITY, selected);
         dialog.setVisible(true);
         if (dialog.isConfirmed()) {
-            priorityService.updatePriority(dialog.getPriority());
-            loadPriorities();
-            isStateChanged = true;
+            UpdatePriorityTask task = new UpdatePriorityTask(dialog.getPriority(), listener);
+            TaskManager.submit(task);
         }
     }
 
     private void deleteSelectedPriority() {
         Priority selected = priorityJList.getSelectedValue();
         if (selected != null) {
-            priorityService.deletePriority(selected);
-            listModel.removeElement(selected);
-            isStateChanged = true;
+            DeletePriorityTask task = new DeletePriorityTask(selected, listener);
+            TaskManager.submit(task);
         }
+    }
+
+    @Override
+    public void update() {
+        GetAllPrioritiesTask task = new GetAllPrioritiesTask(null, result -> {
+            this.currentPriorities = result;
+            redrawPriorities();
+        });
+        TaskManager.submit(task);
     }
 
     private static class PriorityListRenderer extends DefaultListCellRenderer {

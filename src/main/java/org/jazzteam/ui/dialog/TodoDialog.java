@@ -1,10 +1,11 @@
 package org.jazzteam.ui.dialog;
 
 import lombok.Getter;
-import org.jazzteam.core.ApplicationContext;
 import org.jazzteam.model.Priority;
 import org.jazzteam.model.Status;
 import org.jazzteam.model.Todo;
+import org.jazzteam.task.TaskManager;
+import org.jazzteam.task.priority.GetAllPrioritiesTask;
 import org.jazzteam.ui.renderer.PriorityRenderer;
 
 import javax.swing.*;
@@ -74,8 +75,18 @@ public class TodoDialog extends JDialog {
         addFormRow(formPanel, gbc, 1, DESCRIPTION, new JScrollPane(descriptionArea));
 
         // Priority
-        priorityComboBox = new JComboBox<>(ApplicationContext.getPriorityService().getAllPriorities().toArray(new Priority[0]));
+        priorityComboBox = new JComboBox<>();
+        priorityComboBox.setEnabled(false);
         priorityComboBox.setRenderer(new PriorityRenderer());
+        GetAllPrioritiesTask task = new GetAllPrioritiesTask(null, result -> SwingUtilities.invokeLater(() -> {
+            priorityComboBox.removeAllItems();
+            for (Priority priority : result) {
+                priorityComboBox.addItem(priority);
+            }
+            priorityComboBox.setEnabled(true);
+            priorityComboBox.setSelectedItem(todo != null && todo.getPriority() != null ? todo.getPriority() : "");
+        }));
+        TaskManager.submit(task);
 
         addFormRow(formPanel, gbc, 2, PRIORITY, priorityComboBox);
 
@@ -133,7 +144,6 @@ public class TodoDialog extends JDialog {
         if (todo != null) {
             titleField.setText(todo.getTitle());
             descriptionArea.setText(todo.getDescription());
-            priorityComboBox.setSelectedItem(todo.getPriority() != null ? todo.getPriority() : "");
             creationDateField.setText(todo.getCreationDate().toString());
             dueDateField.setText(todo.getDueDate() != null ? todo.getDueDate().toString() : "");
             statusComboBox.setSelectedItem(todo.getStatus());

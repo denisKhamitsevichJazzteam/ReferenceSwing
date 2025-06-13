@@ -44,10 +44,10 @@ public class TodoServiceTest {
     }
 
     @Test
-    public void testAddTodo() {
+    public void testSaveTodo() {
         Todo todo = new Todo(1L, "Title", "Description", new Priority("Medium", 2),
                 LocalDate.now(), LocalDate.now().plusDays(7), Status.OPEN, 1);
-        todoService.addTodo(todo);
+        todoService.saveTodo(todo);
         verify(todoDAO).save(todo);
     }
 

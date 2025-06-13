@@ -1,7 +1,6 @@
 package org.jazzteam.ui.panel;
 
 import lombok.Getter;
-import org.jazzteam.core.ApplicationContext;
 import org.jazzteam.model.Status;
 import org.jazzteam.ui.editor.PriorityCellEditor;
 import org.jazzteam.ui.table.TodoTableModel;
@@ -29,14 +28,10 @@ public class TodoTablePanel extends JPanel {
         table.setDefaultEditor(Status.class, new DefaultCellEditor(new JComboBox<>(Status.values())));
     }
 
-    public void updateData() {
-        tableModel.updateData();
-    }
-
     private void initUi() {
         setLayout(new BorderLayout());
 
-        tableModel = new TodoTableModel(ApplicationContext.getTodoService());
+        tableModel = new TodoTableModel();
         table = new JTable(tableModel);
 
         table.setRowHeight(DEFAULT_ROW_HEIGHT);
