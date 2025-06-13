@@ -17,11 +17,12 @@ public abstract class AbstractTask<T> implements Runnable {
 
     @Override
     public void run() {
-        T result = null;
+        T result;
         try {
             result = execute();
         } catch (Exception e) {
             log.error("Task execution failed with exception: {}", e.getMessage());
+            return;
         }
 
         final T finalResult = result;
