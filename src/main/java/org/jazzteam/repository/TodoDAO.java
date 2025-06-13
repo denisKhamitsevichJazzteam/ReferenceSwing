@@ -48,18 +48,17 @@ public class TodoDAO extends AbstractDAO<Todo> {
             }
 
             int currentOrder = current.getSortOrder();
-            if (currentOrder <= 1) {
-                tx.commit();
-                return;
-            }
 
             Todo previous = session.createQuery(
-                            "FROM Todo WHERE sortOrder = :prevOrder", Todo.class)
-                    .setParameter("prevOrder", currentOrder - 1)
+                            "FROM Todo WHERE sortOrder < :currentOrder ORDER BY sortOrder DESC",
+                            Todo.class)
+                    .setParameter("currentOrder", currentOrder)
+                    .setMaxResults(1)
                     .uniqueResult();
 
             if (previous != null) {
-                current.setSortOrder(currentOrder - 1);
+                int prevOrder = previous.getSortOrder();
+                current.setSortOrder(prevOrder);
                 previous.setSortOrder(currentOrder);
 
                 session.update(current);
@@ -69,6 +68,7 @@ public class TodoDAO extends AbstractDAO<Todo> {
             tx.commit();
         }
     }
+
 
     public void moveDown(Long todoId) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -82,21 +82,16 @@ public class TodoDAO extends AbstractDAO<Todo> {
 
             int currentOrder = current.getSortOrder();
 
-            Integer maxOrder = session.createQuery("SELECT max(sortOrder) FROM Todo", Integer.class)
-                    .uniqueResult();
-
-            if (maxOrder == null || currentOrder >= maxOrder) {
-                tx.commit();
-                return;
-            }
-
             Todo next = session.createQuery(
-                            "FROM Todo WHERE sortOrder = :nextOrder", Todo.class)
-                    .setParameter("nextOrder", currentOrder + 1)
+                            "FROM Todo WHERE sortOrder > :currentOrder ORDER BY sortOrder ASC",
+                            Todo.class)
+                    .setParameter("currentOrder", currentOrder)
+                    .setMaxResults(1)
                     .uniqueResult();
 
             if (next != null) {
-                current.setSortOrder(currentOrder + 1);
+                int nextOrder = next.getSortOrder();
+                current.setSortOrder(nextOrder);
                 next.setSortOrder(currentOrder);
 
                 session.update(current);
@@ -106,6 +101,7 @@ public class TodoDAO extends AbstractDAO<Todo> {
             tx.commit();
         }
     }
+
 
     public void clearPriorityFromTodos(Priority priority) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {

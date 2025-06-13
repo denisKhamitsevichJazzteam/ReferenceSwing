@@ -17,7 +17,7 @@ public class TodoService {
         return todoDAO.findAll();
     }
 
-    public void addTodo(Todo todo) {
+    public void saveTodo(Todo todo) {
         todoDAO.save(todo);
     }
 

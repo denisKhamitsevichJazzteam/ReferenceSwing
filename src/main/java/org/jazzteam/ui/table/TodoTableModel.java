@@ -2,32 +2,26 @@ package org.jazzteam.ui.table;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.jazzteam.core.ApplicationContext;
 import org.jazzteam.model.Priority;
 import org.jazzteam.model.Status;
 import org.jazzteam.model.Todo;
-import org.jazzteam.service.TodoService;
+import org.jazzteam.task.TaskManager;
+import org.jazzteam.task.Updatable;
+import org.jazzteam.task.listener.CommonTaskListener;
+import org.jazzteam.task.todo.GetAllTodosTask;
+import org.jazzteam.task.todo.UpdateTodoTask;
 
 import javax.swing.table.AbstractTableModel;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
-public class TodoTableModel extends AbstractTableModel {
-    private List<Todo> todos;
-    private final TodoService todoService;
+public class TodoTableModel extends AbstractTableModel implements Updatable {
+    private List<Todo> todos = new ArrayList<>();
     private final String[] columns = {"Title", "Description", "Priority", "Creation Date", "Due Date", "Status"};
-
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-    public TodoTableModel(TodoService todoService) {
-        this.todoService = todoService;
-    }
-
-    public void updateData() {
-        this.todos = todoService.getAllTodos();
-        fireTableDataChanged();
-    }
 
     public Todo getTodoAt(int rowIndex) {
         return todos.get(rowIndex);
@@ -53,9 +47,6 @@ public class TodoTableModel extends AbstractTableModel {
         switch (col) {
             case 2:
                 return Priority.class;
-            case 3:
-            case 4:
-                return String.class;
             case 5:
                 return Status.class;
             default:
@@ -116,7 +107,19 @@ public class TodoTableModel extends AbstractTableModel {
             default:
                 return;
         }
-        ApplicationContext.getTodoService().updateTodo(todo);
-        fireTableCellUpdated(row, col);
+
+        CommonTaskListener<Void> listener = new CommonTaskListener<>(Collections.singletonList(this));
+        UpdateTodoTask task = new UpdateTodoTask(todo, listener);
+        TaskManager.submit(task);
     }
+
+    @Override
+    public void update() {
+        GetAllTodosTask task = new GetAllTodosTask(null, result -> {
+            this.todos = result;
+            fireTableDataChanged();
+        });
+        TaskManager.submit(task);
+    }
+
 }
