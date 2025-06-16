@@ -17,16 +17,20 @@ public abstract class AbstractTask<T> implements Runnable {
 
     @Override
     public void run() {
-        T result;
+        T result = null;
+        Exception exception = null;
+
         try {
             result = execute();
         } catch (Exception e) {
+            exception = e;
             log.error("Task execution failed with exception: {}", e.getMessage());
-            return;
         }
 
         final T finalResult = result;
-        SwingUtilities.invokeLater(() -> listener.onFinished(finalResult));
+        final Exception finalException = exception;
+
+        SwingUtilities.invokeLater(() -> listener.onFinished(finalResult, finalException));
     }
 }
 

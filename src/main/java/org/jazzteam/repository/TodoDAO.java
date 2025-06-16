@@ -2,6 +2,9 @@ package org.jazzteam.repository;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.jazzteam.exception.EntityNotFoundException;
+import org.jazzteam.exception.InvalidReferenceException;
+import org.jazzteam.exception.StaleDataException;
 import org.jazzteam.model.Priority;
 import org.jazzteam.model.Todo;
 import org.jazzteam.util.HibernateUtil;
@@ -37,31 +40,70 @@ public class TodoDAO extends AbstractDAO<Todo> {
         }
     }
 
-    public void moveUp(Long todoId) {
+    @Override
+    public void update(Todo todo) {
+        execute(session -> {
+            Todo existing = session.get(Todo.class, todo.getId());
+            if (existing == null) {
+                throw new EntityNotFoundException("Todo not found: it may have been deleted");
+            }
+
+            if (todo.getPriority() != null) {
+                Priority priority = session.get(Priority.class, todo.getPriority().getId());
+                if (priority == null) {
+                    throw new InvalidReferenceException("Priority not found for a given Todo");
+                }
+            }
+
+            session.merge(todo);
+            return null;
+        });
+    }
+
+    @Override
+    public void delete(Todo todo) {
+        execute(session -> {
+            Todo existing = session.get(Todo.class, todo.getId());
+            if (existing == null) {
+                return null;
+            }
+
+            session.delete(existing);
+            return null;
+        });
+    }
+
+    public void moveUp(Todo todo) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Transaction tx = session.beginTransaction();
 
-            Todo current = session.get(Todo.class, todoId);
-            if (current == null) {
+            Todo existing = session.get(Todo.class, todo.getId());
+            if (existing == null) {
                 tx.commit();
-                return;
+                throw new EntityNotFoundException("Todo not found: it may have been deleted");
             }
 
-            int currentOrder = current.getSortOrder();
+            int localOrder = todo.getSortOrder();
+            int actualOrder = existing.getSortOrder();
 
             Todo previous = session.createQuery(
                             "FROM Todo WHERE sortOrder < :currentOrder ORDER BY sortOrder DESC",
                             Todo.class)
-                    .setParameter("currentOrder", currentOrder)
+                    .setParameter("currentOrder", localOrder)
                     .setMaxResults(1)
                     .uniqueResult();
 
+            if (localOrder != actualOrder && (previous == null || !previous.getId().equals(todo.getId()))) {
+                tx.commit();
+                throw new StaleDataException("Todo current order is outdated!");
+            }
+
             if (previous != null) {
                 int prevOrder = previous.getSortOrder();
-                current.setSortOrder(prevOrder);
-                previous.setSortOrder(currentOrder);
+                existing.setSortOrder(prevOrder);
+                previous.setSortOrder(actualOrder);
 
-                session.update(current);
+                session.update(existing);
                 session.update(previous);
             }
 
@@ -70,31 +112,38 @@ public class TodoDAO extends AbstractDAO<Todo> {
     }
 
 
-    public void moveDown(Long todoId) {
+    public void moveDown(Todo todo) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Transaction tx = session.beginTransaction();
 
-            Todo current = session.get(Todo.class, todoId);
-            if (current == null) {
+            Todo existing = session.get(Todo.class, todo.getId());
+            if (existing == null) {
                 tx.commit();
-                return;
+                throw new EntityNotFoundException("Todo not found: it may have been deleted");
             }
 
-            int currentOrder = current.getSortOrder();
+            int localOrder = todo.getSortOrder();
+            int actualOrder = existing.getSortOrder();
 
             Todo next = session.createQuery(
                             "FROM Todo WHERE sortOrder > :currentOrder ORDER BY sortOrder ASC",
                             Todo.class)
-                    .setParameter("currentOrder", currentOrder)
+                    .setParameter("currentOrder", localOrder)
                     .setMaxResults(1)
                     .uniqueResult();
 
+            if (localOrder != actualOrder && (next == null || !next.getId().equals(todo.getId()))) {
+                tx.commit();
+                throw new StaleDataException("Todo current order is outdated!");
+            }
+
+
             if (next != null) {
                 int nextOrder = next.getSortOrder();
-                current.setSortOrder(nextOrder);
-                next.setSortOrder(currentOrder);
+                existing.setSortOrder(nextOrder);
+                next.setSortOrder(actualOrder);
 
-                session.update(current);
+                session.update(existing);
                 session.update(next);
             }
 

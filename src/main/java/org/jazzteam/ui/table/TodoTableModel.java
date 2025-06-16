@@ -115,7 +115,7 @@ public class TodoTableModel extends AbstractTableModel implements Updatable {
 
     @Override
     public void update() {
-        GetAllTodosTask task = new GetAllTodosTask(null, result -> {
+        GetAllTodosTask task = new GetAllTodosTask(null, (result, ex) -> {
             this.todos = result;
             fireTableDataChanged();
         });

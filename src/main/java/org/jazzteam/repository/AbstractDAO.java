@@ -22,9 +22,6 @@ public abstract class AbstractDAO<T> {
             R result = command.apply(session);
             transaction.commit();
             return result;
-        } catch (RuntimeException e) {
-            if (transaction != null) transaction.rollback();
-            throw new RuntimeException("Cannot execute command: ", e);
         }
     }
 

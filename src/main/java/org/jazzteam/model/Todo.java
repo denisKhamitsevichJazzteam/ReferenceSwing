@@ -1,8 +1,6 @@
 package org.jazzteam.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -12,6 +10,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Entity
 @Table(name = "todos")
+@EqualsAndHashCode(of = "id")
+@ToString(of = "id")
 public class Todo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -123,7 +123,7 @@ public class PriorityDialog extends JDialog implements Updatable {
 
     @Override
     public void update() {
-        GetAllPrioritiesTask task = new GetAllPrioritiesTask(null, result -> {
+        GetAllPrioritiesTask task = new GetAllPrioritiesTask(null, (result, ex) -> {
             this.currentPriorities = result;
             redrawPriorities();
         });

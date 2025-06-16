@@ -1,5 +1,6 @@
 package org.jazzteam.task.listener;
 
+import org.jazzteam.exception.EntityException;
 import org.jazzteam.task.Updatable;
 
 import javax.swing.*;
@@ -13,7 +14,21 @@ public class CommonTaskListener<T> implements TaskListener<T> {
     }
 
     @Override
-    public void onFinished(T result) {
+    public void onFinished(T result, Exception exception) {
+        if (exception != null) {
+            String message;
+
+            if (exception instanceof EntityException) {
+                message = exception.getMessage();
+            } else {
+                message = "An unexpected error occurred: " + exception.getMessage();
+            }
+            JOptionPane.showMessageDialog(null,
+                    message,
+                    "Data Conflict",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+
         SwingUtilities.invokeLater(() -> {
             for (Updatable updatable : elements) {
                 updatable.update();

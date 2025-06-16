@@ -11,7 +11,7 @@ public class MoveDownTodoTask extends AbstractTodoTask<Void> {
 
     @Override
     protected Void execute() {
-        todoService.moveDown(entry.getId());
+        todoService.moveDown(entry);
         return null;
     }
 }
