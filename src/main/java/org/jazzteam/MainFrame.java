@@ -23,10 +23,10 @@ public class MainFrame extends JFrame {
 
     public MainFrame() {
         super("Reference project");
+        ApplicationContext.getEventBroker().subscribe();
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(800, 600);
         setLocationRelativeTo(null);
-        ApplicationContext.getEventBroker().subscribe();
 
         initUi();
         bindListeners();

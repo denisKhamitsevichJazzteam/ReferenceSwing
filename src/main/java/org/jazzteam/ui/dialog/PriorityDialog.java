@@ -68,7 +68,7 @@ public class PriorityDialog extends JDialog implements Updatable {
             if (currentPriorities.stream().anyMatch(priority -> priority.getId().equals(newPriority.getId())))
                 return;
             currentPriorities.add(newPriority);
-            SwingUtilities.invokeLater(() -> listModel.addElement(newPriority));
+            listModel.addElement(newPriority);
         };
         dispatcher.register(EventType.PRIORITY_SAVED, prioritySavedListener);
         registeredListeners.add(new ListenerRegistration<>(EventType.PRIORITY_SAVED, prioritySavedListener));
@@ -83,8 +83,7 @@ public class PriorityDialog extends JDialog implements Updatable {
 
             if (indexToRemove != -1) {
                 currentPriorities.remove(indexToRemove);
-                final int idx = indexToRemove;
-                SwingUtilities.invokeLater(() -> listModel.remove(idx));
+                listModel.remove(indexToRemove);
             }
         };
         dispatcher.register(EventType.PRIORITY_DELETED, priorityDeletedListener);
@@ -100,8 +99,7 @@ public class PriorityDialog extends JDialog implements Updatable {
                         Priority priority = currentPriorities.get(i);
                         ApplicationContext.getPriorityService().refreshPriority(priority);
                         currentPriorities.set(i, priority);
-                        final int index = i;
-                        SwingUtilities.invokeLater(() -> listModel.setElementAt(priority, index));
+                        listModel.setElementAt(priority, i);
                     });
         };
         dispatcher.register(EventType.PRIORITY_UPDATED, priorityUpdatedListener);

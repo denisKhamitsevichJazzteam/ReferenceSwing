@@ -46,6 +46,8 @@ public class EventBroker {
 
     @SneakyThrows
     public void publish(AppEvent event) {
+        if (session == null)
+            throw new RuntimeException("Event session is null!");
         String json = EventSerializer.serialize(event);
         TextMessage message = session.createTextMessage(json);
         message.setStringProperty(EVENT_TYPE, event.getType().name());
@@ -72,7 +74,7 @@ public class EventBroker {
                     throw new RuntimeException(
                             "Cannot process JMS message. MessageType: " + msg.getClass().getSimpleName(), e);
                 }
-            }
+            } else throw new RuntimeException("Unknown message type: " + msg.getClass().getSimpleName());
         });
     }
 }

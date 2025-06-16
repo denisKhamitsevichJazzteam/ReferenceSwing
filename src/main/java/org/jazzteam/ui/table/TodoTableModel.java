@@ -17,7 +17,6 @@ import org.jazzteam.task.listener.CommonTaskListener;
 import org.jazzteam.task.todo.GetAllTodosTask;
 import org.jazzteam.task.todo.UpdateTodoTask;
 
-import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -147,7 +146,7 @@ public class TodoTableModel extends AbstractTableModel implements Updatable {
             if (todos.stream().anyMatch(todo -> todo.getId().equals(newTodo.getId()))) return;
             todos.add(newTodo);
             int index = todos.size() - 1;
-            SwingUtilities.invokeLater(() -> fireTableRowsInserted(index, index));
+            fireTableRowsInserted(index, index);
         });
 
         dispatcher.register(EventType.TODO_MOVED_UP, (TodoMovedUpEvent e) -> moveUp(e.getTodoId()));
@@ -209,7 +208,7 @@ public class TodoTableModel extends AbstractTableModel implements Updatable {
         todos.set(index - 1, todo);
         todos.set(index, above);
 
-        SwingUtilities.invokeLater(() -> fireTableRowsUpdated(index - 1, index));
+        fireTableRowsUpdated(index - 1, index);
     }
 
     private void moveDown(Long todoId) {
@@ -226,7 +225,7 @@ public class TodoTableModel extends AbstractTableModel implements Updatable {
         todos.set(index, below);
         todos.set(index + 1, todo);
 
-        SwingUtilities.invokeLater(() -> fireTableRowsUpdated(index, index + 1));
+        fireTableRowsUpdated(index, index + 1);
     }
 
     private Optional<Todo> findTodoById(Long id) {
@@ -237,7 +236,7 @@ public class TodoTableModel extends AbstractTableModel implements Updatable {
         ApplicationContext.getTodoService().refreshTodo(todo);
         int rowIndex = todos.indexOf(todo);
         if (rowIndex != -1) {
-            SwingUtilities.invokeLater(() -> fireTableRowsUpdated(rowIndex, rowIndex));
+            fireTableRowsUpdated(rowIndex, rowIndex);
         }
     }
 
@@ -245,17 +244,16 @@ public class TodoTableModel extends AbstractTableModel implements Updatable {
         int index = findTodoIndexById(id);
         if (index != -1) {
             todos.remove(index);
-            SwingUtilities.invokeLater(() -> fireTableRowsDeleted(index, index));
+            fireTableRowsDeleted(index, index);
         }
     }
 
     private void repaintRows(List<Integer> indexes) {
         if (!indexes.isEmpty()) {
-            SwingUtilities.invokeLater(() -> {
-                for (int i : indexes) {
-                    fireTableRowsUpdated(i, i);
-                }
-            });
+            for (int i : indexes) {
+                fireTableRowsUpdated(i, i);
+            }
+
         }
     }
 

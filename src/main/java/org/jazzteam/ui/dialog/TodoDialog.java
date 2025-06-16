@@ -87,7 +87,7 @@ public class TodoDialog extends JDialog {
         registeredListeners.add(new ListenerRegistration<>(EventType.TODO_DELETED, todoDeletedListener));
 
 
-        AppEventListener<PriorityDeletedEvent> priorityDeletedListener = (PriorityDeletedEvent e) -> updatePrioritiesComboBox();
+        AppEventListener<PriorityDeletedEvent> priorityDeletedListener = (PriorityDeletedEvent e) -> removePriorityFromComboBoxById(e.getPriorityId());
         dispatcher.register(EventType.PRIORITY_DELETED, priorityDeletedListener);
         registeredListeners.add(new ListenerRegistration<>(EventType.PRIORITY_DELETED, priorityDeletedListener));
 
@@ -160,15 +160,25 @@ public class TodoDialog extends JDialog {
     }
 
     private void updatePrioritiesComboBox() {
-        GetAllPrioritiesTask task = new GetAllPrioritiesTask(null, result -> SwingUtilities.invokeLater(() -> {
+        GetAllPrioritiesTask task = new GetAllPrioritiesTask(null, result -> {
             priorityComboBox.removeAllItems();
             for (Priority priority : result) {
                 priorityComboBox.addItem(priority);
             }
             priorityComboBox.setEnabled(true);
             priorityComboBox.setSelectedItem(todo != null && todo.getPriority() != null ? todo.getPriority() : "");
-        }));
+        });
         TaskManager.submit(task);
+    }
+
+    private void removePriorityFromComboBoxById(Long priorityId) {
+        for (int i = 0; i < priorityComboBox.getItemCount(); i++) {
+            Priority priority = priorityComboBox.getItemAt(i);
+            if (priority != null && priority.getId().equals(priorityId)) {
+                priorityComboBox.removeItemAt(i);
+                break;
+            }
+        }
     }
 
     private void addFormRow(JPanel panel, GridBagConstraints gbc, int row, String label, Component field) {

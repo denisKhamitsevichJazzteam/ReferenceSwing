@@ -5,6 +5,7 @@ import org.jazzteam.event.listener.ListenerRegistration;
 import org.jazzteam.event.model.AppEvent;
 import org.jazzteam.event.model.EventType;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -48,7 +49,7 @@ public class EventDispatcher {
         if (eventListeners != null) {
             for (AppEventListener listener : eventListeners) {
                 try {
-                    listener.onEvent(event);
+                    SwingUtilities.invokeLater(() -> listener.onEvent(event));
                 } catch (Exception e) {
                     throw new RuntimeException(
                             "Exception occurred while dispatching event of type " + event.getType() +
