@@ -1,6 +1,8 @@
 package org.jazzteam.core;
 
 import lombok.Getter;
+import org.jazzteam.event.EventBroker;
+import org.jazzteam.event.EventDispatcher;
 import org.jazzteam.repository.PriorityDAO;
 import org.jazzteam.repository.TodoDAO;
 import org.jazzteam.service.PriorityService;
@@ -29,5 +31,10 @@ public class ApplicationContext {
     private static final TodoService todoService = new TodoService(todoDAO);
     @Getter
     private static final PriorityService priorityService = new PriorityService(priorityDAO);
+
+    @Getter
+    private static final EventDispatcher eventDispatcher = new EventDispatcher();
+    @Getter
+    private static final EventBroker eventBroker = new EventBroker(eventDispatcher);
 
 }

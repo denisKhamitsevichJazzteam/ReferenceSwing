@@ -1,15 +1,24 @@
 package org.jazzteam.ui.dialog;
 
+import org.jazzteam.core.ApplicationContext;
+import org.jazzteam.event.EventDispatcher;
+import org.jazzteam.event.listener.AppEventListener;
+import org.jazzteam.event.listener.ListenerRegistration;
+import org.jazzteam.event.model.EventType;
+import org.jazzteam.event.model.priority.PriorityDeletedEvent;
 import org.jazzteam.model.Priority;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PriorityEditDialog extends JDialog {
     private JTextField nameField;
     private JTextField weightField;
     private boolean isConfirmed = false;
     private Priority priority;
+    private final List<ListenerRegistration<?>> registeredListeners = new ArrayList<>();
 
     public static final String NAME = "Name:";
     public static final String WEIGHT = "Weight:";
@@ -22,6 +31,28 @@ public class PriorityEditDialog extends JDialog {
         initUI();
         pack();
         setLocationRelativeTo(owner);
+        registerInEventDispatcher();
+    }
+
+    @Override
+    public void dispose() {
+        ApplicationContext.getEventDispatcher().unregisterAll(registeredListeners);
+        super.dispose();
+    }
+
+    private void registerInEventDispatcher() {
+        EventDispatcher dispatcher = ApplicationContext.getEventDispatcher();
+        AppEventListener<PriorityDeletedEvent> priorityDeletedListener = (PriorityDeletedEvent e) -> {
+            if (priority != null && priority.getId().equals(e.getPriorityId())) {
+                JOptionPane.showMessageDialog(this,
+                        "Sorry, this Priority no longer exists as it has been deleted",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                dispose();
+            }
+        };
+        dispatcher.register(EventType.PRIORITY_DELETED, priorityDeletedListener);
+        registeredListeners.add(new ListenerRegistration<>(EventType.PRIORITY_DELETED, priorityDeletedListener));
     }
 
     private void initUI() {

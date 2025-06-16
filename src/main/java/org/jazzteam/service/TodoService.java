@@ -25,6 +25,10 @@ public class TodoService {
         todoDAO.update(todo);
     }
 
+    public void refreshTodo(Todo todo) {
+        todoDAO.refresh(todo);
+    }
+
     public void clearPriorityFromTodos(Priority priority) {
         todoDAO.clearPriorityFromTodos(priority);
     }

@@ -1,5 +1,13 @@
 package org.jazzteam.ui.dialog;
 
+import org.jazzteam.core.ApplicationContext;
+import org.jazzteam.event.EventDispatcher;
+import org.jazzteam.event.listener.AppEventListener;
+import org.jazzteam.event.listener.ListenerRegistration;
+import org.jazzteam.event.model.EventType;
+import org.jazzteam.event.model.priority.PriorityDeletedEvent;
+import org.jazzteam.event.model.priority.PrioritySavedEvent;
+import org.jazzteam.event.model.priority.PriorityUpdatedEvent;
 import org.jazzteam.model.Priority;
 import org.jazzteam.task.TaskManager;
 import org.jazzteam.task.Updatable;
@@ -13,6 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class PriorityDialog extends JDialog implements Updatable {
     private final DefaultListModel<Priority> listModel = new DefaultListModel<>();
@@ -20,6 +29,7 @@ public class PriorityDialog extends JDialog implements Updatable {
     private final List<Updatable> updatableElements = new ArrayList<>();
     private CommonTaskListener<Void> listener;
     private List<Priority> currentPriorities = new ArrayList<>();
+    private final List<ListenerRegistration<?>> registeredListeners = new ArrayList<>();
 
     public static final String PRIORITY_MANAGEMENT = "Priority Management";
     public static final String ADD = "Add";
@@ -38,10 +48,65 @@ public class PriorityDialog extends JDialog implements Updatable {
         setTitle(PRIORITY_MANAGEMENT);
         initUI();
         update();
+        registerInEventDispatcher();
 
         pack();
         setLocationRelativeTo(owner);
         setMinimumSize(new Dimension(400, 500));
+    }
+
+    @Override
+    public void dispose() {
+        ApplicationContext.getEventDispatcher().unregisterAll(registeredListeners);
+        super.dispose();
+    }
+
+    private void registerInEventDispatcher() {
+        EventDispatcher dispatcher = ApplicationContext.getEventDispatcher();
+        AppEventListener<PrioritySavedEvent> prioritySavedListener = (PrioritySavedEvent e) -> {
+            Priority newPriority = e.getPriority();
+            if (currentPriorities.stream().anyMatch(priority -> priority.getId().equals(newPriority.getId())))
+                return;
+            currentPriorities.add(newPriority);
+            SwingUtilities.invokeLater(() -> listModel.addElement(newPriority));
+        };
+        dispatcher.register(EventType.PRIORITY_SAVED, prioritySavedListener);
+        registeredListeners.add(new ListenerRegistration<>(EventType.PRIORITY_SAVED, prioritySavedListener));
+
+
+        AppEventListener<PriorityDeletedEvent> priorityDeletedListener = (PriorityDeletedEvent e) -> {
+            Long deletedId = e.getPriorityId();
+            int indexToRemove = IntStream.range(0, currentPriorities.size())
+                    .filter(i -> currentPriorities.get(i).getId().equals(deletedId))
+                    .findFirst()
+                    .orElse(-1);
+
+            if (indexToRemove != -1) {
+                currentPriorities.remove(indexToRemove);
+                final int idx = indexToRemove;
+                SwingUtilities.invokeLater(() -> listModel.remove(idx));
+            }
+        };
+        dispatcher.register(EventType.PRIORITY_DELETED, priorityDeletedListener);
+        registeredListeners.add(new ListenerRegistration<>(EventType.PRIORITY_DELETED, priorityDeletedListener));
+
+
+        AppEventListener<PriorityUpdatedEvent> priorityUpdatedListener = (PriorityUpdatedEvent e) -> {
+            Long updatedId = e.getPriorityId();
+            IntStream.range(0, currentPriorities.size())
+                    .filter(i -> currentPriorities.get(i).getId().equals(updatedId))
+                    .findFirst()
+                    .ifPresent(i -> {
+                        Priority priority = currentPriorities.get(i);
+                        ApplicationContext.getPriorityService().refreshPriority(priority);
+                        currentPriorities.set(i, priority);
+                        final int index = i;
+                        SwingUtilities.invokeLater(() -> listModel.setElementAt(priority, index));
+                    });
+        };
+        dispatcher.register(EventType.PRIORITY_UPDATED, priorityUpdatedListener);
+        registeredListeners.add(new ListenerRegistration<>(EventType.PRIORITY_UPDATED, priorityUpdatedListener));
+
     }
 
     private void initUI() {

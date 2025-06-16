@@ -23,6 +23,10 @@ public class PriorityService {
         priorityDAO.save(priority);
     }
 
+    public void refreshPriority(Priority priority) {
+        priorityDAO.refresh(priority);
+    }
+
     public void updatePriority(Priority newPriority) {
         priorityDAO.update(newPriority);
     }
