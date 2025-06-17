@@ -76,15 +76,17 @@ public class TodoServiceTest {
 
     @Test
     public void testMoveUp() {
-        Long id = 3L;
-        todoService.moveUp(id);
-        verify(todoDAO).moveUp(id);
+        Todo todo = new Todo();
+        todo.setId(3L);
+        todoService.moveUp(todo);
+        verify(todoDAO).moveUp(todo);
     }
 
     @Test
     public void testMoveDown() {
-        Long id = 4L;
-        todoService.moveDown(id);
-        verify(todoDAO).moveDown(id);
+        Todo todo = new Todo();
+        todo.setId(4L);
+        todoService.moveDown(todo);
+        verify(todoDAO).moveDown(todo);
     }
 }

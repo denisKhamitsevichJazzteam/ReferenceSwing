@@ -13,6 +13,10 @@ import java.util.List;
 
 
 public class TodoDAO extends AbstractDAO<Todo> {
+
+    public static final String TODO_NOT_FOUND = "Todo not found: it may have been deleted";
+    public static final String TODO_CURRENT_ORDER_IS_OUTDATED = "Todo current order is outdated!";
+
     public TodoDAO() {
         super(Todo.class);
     }
@@ -45,7 +49,7 @@ public class TodoDAO extends AbstractDAO<Todo> {
         execute(session -> {
             Todo existing = session.get(Todo.class, todo.getId());
             if (existing == null) {
-                throw new EntityNotFoundException("Todo not found: it may have been deleted");
+                throw new EntityNotFoundException(TODO_NOT_FOUND);
             }
 
             if (todo.getPriority() != null) {
@@ -80,7 +84,7 @@ public class TodoDAO extends AbstractDAO<Todo> {
             Todo existing = session.get(Todo.class, todo.getId());
             if (existing == null) {
                 tx.commit();
-                throw new EntityNotFoundException("Todo not found: it may have been deleted");
+                throw new EntityNotFoundException(TODO_NOT_FOUND);
             }
 
             int localOrder = todo.getSortOrder();
@@ -95,7 +99,7 @@ public class TodoDAO extends AbstractDAO<Todo> {
 
             if (localOrder != actualOrder && (previous == null || !previous.getId().equals(todo.getId()))) {
                 tx.commit();
-                throw new StaleDataException("Todo current order is outdated!");
+                throw new StaleDataException(TODO_CURRENT_ORDER_IS_OUTDATED);
             }
 
             if (previous != null) {
@@ -119,7 +123,7 @@ public class TodoDAO extends AbstractDAO<Todo> {
             Todo existing = session.get(Todo.class, todo.getId());
             if (existing == null) {
                 tx.commit();
-                throw new EntityNotFoundException("Todo not found: it may have been deleted");
+                throw new EntityNotFoundException(TODO_NOT_FOUND);
             }
 
             int localOrder = todo.getSortOrder();
@@ -134,7 +138,7 @@ public class TodoDAO extends AbstractDAO<Todo> {
 
             if (localOrder != actualOrder && (next == null || !next.getId().equals(todo.getId()))) {
                 tx.commit();
-                throw new StaleDataException("Todo current order is outdated!");
+                throw new StaleDataException(TODO_CURRENT_ORDER_IS_OUTDATED);
             }
 
 
