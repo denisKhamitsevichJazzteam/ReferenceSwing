@@ -1,5 +1,6 @@
 package org.jazzteam;
 
+import org.jazzteam.core.ApplicationContext;
 import org.jazzteam.model.Todo;
 import org.jazzteam.task.TaskManager;
 import org.jazzteam.task.Updatable;
@@ -22,6 +23,7 @@ public class MainFrame extends JFrame {
 
     public MainFrame() {
         super("Reference project");
+        ApplicationContext.getEventBroker().subscribe();
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(800, 600);
         setLocationRelativeTo(null);

@@ -28,6 +28,12 @@ public abstract class AbstractDAO<T> {
         }
     }
 
+    public void refresh(T entity) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            session.refresh(entity);
+        }
+    }
+
     public void save(T entity) {
         execute(session -> {
             session.save(entity);

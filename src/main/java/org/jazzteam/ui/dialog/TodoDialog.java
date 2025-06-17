@@ -1,6 +1,14 @@
 package org.jazzteam.ui.dialog;
 
 import lombok.Getter;
+import org.jazzteam.core.ApplicationContext;
+import org.jazzteam.event.EventDispatcher;
+import org.jazzteam.event.listener.AppEventListener;
+import org.jazzteam.event.listener.ListenerRegistration;
+import org.jazzteam.event.model.EventType;
+import org.jazzteam.event.model.priority.PriorityDeletedEvent;
+import org.jazzteam.event.model.priority.PriorityUpdatedEvent;
+import org.jazzteam.event.model.todo.TodoDeletedEvent;
 import org.jazzteam.model.Priority;
 import org.jazzteam.model.Status;
 import org.jazzteam.model.Todo;
@@ -12,6 +20,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 public class TodoDialog extends JDialog {
@@ -23,6 +33,8 @@ public class TodoDialog extends JDialog {
     private JComboBox<Status> statusComboBox;
     private boolean isSavePressed = false;
     private Todo todo;
+    private final List<ListenerRegistration<?>> registeredListeners = new ArrayList<>();
+
 
     public static final String ADD_NEW_TASK_TITLE = "Add New Task";
     public static final String EDIT_TASK_TITLE = "Edit Task";
@@ -47,10 +59,42 @@ public class TodoDialog extends JDialog {
 
         initUI();
         fillFields();
+        registerInEventDispatcher();
 
         pack();
         setLocationRelativeTo(owner);
         setMinimumSize(new Dimension(450, 500));
+    }
+
+    @Override
+    public void dispose() {
+        ApplicationContext.getEventDispatcher().unregisterAll(registeredListeners);
+        super.dispose();
+    }
+
+    private void registerInEventDispatcher() {
+        EventDispatcher dispatcher = ApplicationContext.getEventDispatcher();
+        AppEventListener<TodoDeletedEvent> todoDeletedListener = (TodoDeletedEvent e) -> {
+            if (todo != null && todo.getId().equals(e.getTodoId())) {
+                JOptionPane.showMessageDialog(this,
+                        "Sorry, this Todo no longer exists as it has been deleted",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                dispose();
+            }
+        };
+        dispatcher.register(EventType.TODO_DELETED, todoDeletedListener);
+        registeredListeners.add(new ListenerRegistration<>(EventType.TODO_DELETED, todoDeletedListener));
+
+
+        AppEventListener<PriorityDeletedEvent> priorityDeletedListener = (PriorityDeletedEvent e) -> removePriorityFromComboBoxById(e.getPriorityId());
+        dispatcher.register(EventType.PRIORITY_DELETED, priorityDeletedListener);
+        registeredListeners.add(new ListenerRegistration<>(EventType.PRIORITY_DELETED, priorityDeletedListener));
+
+
+        AppEventListener<PriorityUpdatedEvent> priorityUpdatedListener = (PriorityUpdatedEvent e) -> updatePrioritiesComboBox();
+        dispatcher.register(EventType.PRIORITY_UPDATED, priorityUpdatedListener);
+        registeredListeners.add(new ListenerRegistration<>(EventType.PRIORITY_UPDATED, priorityUpdatedListener));
     }
 
     private void initUI() {
@@ -78,15 +122,7 @@ public class TodoDialog extends JDialog {
         priorityComboBox = new JComboBox<>();
         priorityComboBox.setEnabled(false);
         priorityComboBox.setRenderer(new PriorityRenderer());
-        GetAllPrioritiesTask task = new GetAllPrioritiesTask(null, result -> SwingUtilities.invokeLater(() -> {
-            priorityComboBox.removeAllItems();
-            for (Priority priority : result) {
-                priorityComboBox.addItem(priority);
-            }
-            priorityComboBox.setEnabled(true);
-            priorityComboBox.setSelectedItem(todo != null && todo.getPriority() != null ? todo.getPriority() : "");
-        }));
-        TaskManager.submit(task);
+        updatePrioritiesComboBox();
 
         addFormRow(formPanel, gbc, 2, PRIORITY, priorityComboBox);
 
@@ -121,6 +157,28 @@ public class TodoDialog extends JDialog {
 
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
         add(mainPanel);
+    }
+
+    private void updatePrioritiesComboBox() {
+        GetAllPrioritiesTask task = new GetAllPrioritiesTask(null, result -> {
+            priorityComboBox.removeAllItems();
+            for (Priority priority : result) {
+                priorityComboBox.addItem(priority);
+            }
+            priorityComboBox.setEnabled(true);
+            priorityComboBox.setSelectedItem(todo != null && todo.getPriority() != null ? todo.getPriority() : "");
+        });
+        TaskManager.submit(task);
+    }
+
+    private void removePriorityFromComboBoxById(Long priorityId) {
+        for (int i = 0; i < priorityComboBox.getItemCount(); i++) {
+            Priority priority = priorityComboBox.getItemAt(i);
+            if (priority != null && priority.getId().equals(priorityId)) {
+                priorityComboBox.removeItemAt(i);
+                break;
+            }
+        }
     }
 
     private void addFormRow(JPanel panel, GridBagConstraints gbc, int row, String label, Component field) {

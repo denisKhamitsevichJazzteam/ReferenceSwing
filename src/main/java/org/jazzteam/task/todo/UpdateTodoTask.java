@@ -1,5 +1,7 @@
 package org.jazzteam.task.todo;
 
+import org.jazzteam.core.ApplicationContext;
+import org.jazzteam.event.model.todo.TodoUpdatedEvent;
 import org.jazzteam.model.Todo;
 import org.jazzteam.task.listener.TaskListener;
 
@@ -12,6 +14,7 @@ public class UpdateTodoTask extends AbstractTodoTask<Void> {
     @Override
     protected Void execute() {
         todoService.updateTodo(entry);
+        ApplicationContext.getEventBroker().publish(new TodoUpdatedEvent(entry.getId()));
         return null;
     }
 }

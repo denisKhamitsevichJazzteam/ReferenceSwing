@@ -25,7 +25,7 @@ public class PriorityCellEditor extends AbstractCellEditor implements TableCellE
         comboBox.setEnabled(false);
         comboBox.setRenderer(new PriorityRenderer());
 
-        GetAllPrioritiesTask task = new GetAllPrioritiesTask(null, result -> SwingUtilities.invokeLater(() -> {
+        GetAllPrioritiesTask task = new GetAllPrioritiesTask(null, result -> {
             comboBox.removeAllItems();
             for (Priority priority : result) {
                 comboBox.addItem(priority);
@@ -34,7 +34,7 @@ public class PriorityCellEditor extends AbstractCellEditor implements TableCellE
             if (value instanceof Priority) {
                 comboBox.setSelectedItem(value);
             }
-        }));
+        });
         TaskManager.submit(task);
 
         return comboBox;
