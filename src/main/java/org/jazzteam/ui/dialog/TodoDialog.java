@@ -78,7 +78,7 @@ public class TodoDialog extends JDialog {
         priorityComboBox = new JComboBox<>();
         priorityComboBox.setEnabled(false);
         priorityComboBox.setRenderer(new PriorityRenderer());
-        GetAllPrioritiesTask task = new GetAllPrioritiesTask(null, result -> SwingUtilities.invokeLater(() -> {
+        GetAllPrioritiesTask task = new GetAllPrioritiesTask(null, (result, ex) -> SwingUtilities.invokeLater(() -> {
             priorityComboBox.removeAllItems();
             for (Priority priority : result) {
                 priorityComboBox.addItem(priority);

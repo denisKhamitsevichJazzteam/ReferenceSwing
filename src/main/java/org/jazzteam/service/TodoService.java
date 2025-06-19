@@ -33,12 +33,12 @@ public class TodoService {
         todoDAO.delete(todo);
     }
 
-    public void moveUp(Long id) {
-        todoDAO.moveUp(id);
+    public void moveUp(Todo todo) {
+        todoDAO.moveUp(todo);
     }
 
-    public void moveDown(Long id) {
-        todoDAO.moveDown(id);
+    public void moveDown(Todo todo) {
+        todoDAO.moveDown(todo);
     }
 }
 
